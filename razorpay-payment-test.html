@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Razorpay Payment Test</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f7fb; font: 15px Arial, sans-serif; color: #172033; }
+    main { width: min(430px, calc(100% - 32px)); padding: 26px; border-radius: 12px; background: white; box-shadow: 0 8px 26px #1720331c; }
+    h1 { margin: 0 0 8px; font-size: 23px; }
+    p { color: #667085; font-size: 13px; }
+    label { display: block; margin: 16px 0 6px; font-weight: 600; }
+    input { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #ccd2dc; border-radius: 7px; font-size: 14px; }
+    button { width: 100%; margin-top: 22px; padding: 11px; border: 0; border-radius: 7px; background: #2764e7; color: white; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #result { display: none; margin-top: 16px; padding: 10px; border-radius: 7px; white-space: pre-wrap; }
+    .error { display: block !important; color: #b42318; background: #fff1f0; }
+    .success { display: block !important; color: #027a48; background: #ecfdf3; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Razorpay Payment Test</h1>
+  <p>This standalone page is outside the Banking-System project.</p>
+  <form id="form">
+    <label for="account">Account number</label>
+    <input id="account" placeholder="ACC-001" required>
+
+    <label for="amount">Amount (INR)</label>
+    <input id="amount" type="number" min="1" step="0.01" placeholder="100.00" required>
+
+    <label for="description">Description</label>
+    <input id="description" value="Standalone Razorpay test payment">
+
+    <button id="submit" type="submit">Create order and pay</button>
+  </form>
+  <div id="result"></div>
+</main>
+
+<script>
+  const form = document.getElementById("form");
+  const result = document.getElementById("result");
+  const submit = document.getElementById("submit");
+  const paymentServiceUrl = "http://localhost:8083";
+
+  function show(text, type) {
+    result.textContent = text;
+    result.className = type || "";
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    submit.disabled = true;
+    show("");
+
+    const request = {
+      accountNumber: document.getElementById("account").value.trim(),
+      amount: Number(document.getElementById("amount").value),
+      description: document.getElementById("description").value.trim()
+    };
+
+    try {
+      const response = await fetch(paymentServiceUrl + "/api/v1/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request)
+      });
+      const order = await response.json();
+      if (!response.ok) {
+        throw new Error(order.message || order.error || "Order creation failed");
+      }
+
+      const checkout = new Razorpay({
+        key: order.razorpayKeyId,
+        amount: Math.round(request.amount * 100),
+        currency: order.currency || "INR",
+        name: "Banking System",
+        description: request.description,
+        order_id: order.razorpayOrderId,
+        handler: (payment) => show(
+          "Checkout completed.\nPayment ID: " + payment.razorpay_payment_id +
+          "\nOrder ID: " + payment.razorpay_order_id,
+          "success"
+        ),
+        modal: { ondismiss: () => show("Checkout was closed.", "error") }
+      });
+      checkout.on("payment.failed", (failure) =>
+        show("Payment failed: " + (failure.error?.description || "Unknown error"), "error")
+      );
+      checkout.open();
+    } catch (error) {
+      show(error.message, "error");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
