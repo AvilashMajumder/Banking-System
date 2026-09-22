@@ -157,19 +157,27 @@ http://localhost:8080/actuator/health
 
 Each service is independently buildable and contains its own Maven project, application configuration, source code, and tests.
 
-## Resume-Ready Project Summary
+[//]: # (## Resume-Ready Project Summary)
 
-**Banking System | Java, Spring Boot, Kafka, MySQL, Redis, Docker**
+[//]: # ()
+[//]: # (**Banking System | Java, Spring Boot, Kafka, MySQL, Redis, Docker**)
 
-- Designed and implemented a six-service banking platform with independent account, transaction, payment, fraud, notification, and gateway components.
-- Built an event-driven transaction workflow with Kafka consumers/producers and Saga-style compensating operations for balance consistency.
-- Implemented Spring Cloud Gateway routing with Redis-backed rate limiting and Actuator health visibility.
-- Integrated Razorpay order creation and webhook processing while separating payment concerns from core transaction processing.
-- Containerized local infrastructure with Docker Compose for MySQL, Redis, Kafka, and ZooKeeper.
+[//]: # ()
+[//]: # (- Designed and implemented a six-service banking platform with independent account, transaction, payment, fraud, notification, and gateway components.)
 
-## Security Notes
+[//]: # (- Built an event-driven transaction workflow with Kafka consumers/producers and Saga-style compensating operations for balance consistency.)
 
-This repository is for development and demonstration. Never commit real credentials or production configuration. Rotate any credential that has previously been committed, move secrets to environment variables or a secret manager, validate and authenticate webhooks, and add an identity provider with role-based authorization before production deployment.
+[//]: # (- Implemented Spring Cloud Gateway routing with Redis-backed rate limiting and Actuator health visibility.)
+
+[//]: # (- Integrated Razorpay order creation and webhook processing while separating payment concerns from core transaction processing.)
+
+[//]: # (- Containerized local infrastructure with Docker Compose for MySQL, Redis, Kafka, and ZooKeeper.)
+
+[//]: # ()
+[//]: # (## Security Notes)
+
+[//]: # ()
+[//]: # (This repository is for development and demonstration. Never commit real credentials or production configuration. Rotate any credential that has previously been committed, move secrets to environment variables or a secret manager, validate and authenticate webhooks, and add an identity provider with role-based authorization before production deployment.)
 
 ## License
 
