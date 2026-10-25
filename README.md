@@ -94,6 +94,8 @@ This starts MySQL, Redis, Kafka, and ZooKeeper. Allow the containers a few secon
 
 Do not commit database passwords, Razorpay keys, mail credentials, or webhook secrets. Replace the local values in the service configuration with environment-variable or external-secret references before sharing or deploying the project.
 
+For Docker Compose, copy `.env.example` to `.env` and replace each placeholder with the appropriate secret. For services started outside Compose, export `DB_PASSWORD` and the Razorpay variables in the shell before running the Maven Wrapper. The `.env` file is ignored by Git.
+
 At minimum, configure:
 
 - MySQL credentials and connection settings

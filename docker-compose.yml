@@ -15,7 +15,7 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -48,6 +48,111 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    restart: unless-stopped
+    networks:
+      - banking-network
+
+  # -------APP SERVICES-------
+
+  account-service:
+    image: 767398050581.dkr.ecr.eu-north-1.amazonaws.com/account-service:latest
+    container_name: account-service
+    ports:
+      - "8081:8081"
+    environment:
+        SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/account_db?createDatabaseIfNotExist=true
+        SPRING_DATASOURCE_USERNAME: root
+        SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - mysql
+      - kafka
+    restart: unless-stopped
+    networks:
+      - banking-network
+
+  transaction-service:
+    image: 767398050581.dkr.ecr.eu-north-1.amazonaws.com/transaction-service:latest
+    container_name: transaction-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/account_db?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATA_REDIS_HOST: redis
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+    depends_on:
+      - mysql
+      - kafka
+      - redis
+      - account-service
+    restart: unless-stopped
+    networks:
+      - banking-network
+
+  payment-service:
+    image: 767398050581.dkr.ecr.eu-north-1.amazonaws.com/payment-service:latest
+    container_name: payment-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/account_db?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+    depends_on:
+      - mysql
+      - kafka
+    restart: unless-stopped
+    networks:
+      - banking-network
+
+  fraud-detection-service:
+    image: 767398050581.dkr.ecr.eu-north-1.amazonaws.com/fraud-detection-service:latest
+    container_name: fraud-detection-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+    depends_on:
+      - kafka
+      - redis
+      - account-service
+    restart: unless-stopped
+    networks:
+      - banking-network
+
+  notification-service:
+    image: 767398050581.dkr.ecr.eu-north-1.amazonaws.com/notification-service:latest
+    container_name: notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - kafka
+    restart: unless-stopped
+    networks:
+      - banking-network
+
+  api-gateway:
+    image: 767398050581.dkr.ecr.eu-north-1.amazonaws.com/api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+        SPRING_DATA_REDIS_HOST: redis
+    depends_on:
+      - account-service
+      - transaction-service
+      - payment-service
     networks:
       - banking-network
 

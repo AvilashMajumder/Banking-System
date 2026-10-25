@@ -2,5 +2,6 @@
 .postman/
 .env
 .env.*
+!.env.example
 target/
 *.log
